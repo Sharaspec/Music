@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cut">
+  <title>Wavecraft Studio</title>
+  <meta name="description" content="Create, remix and explore AI music with your SunoAPI key — songs, lyrics, covers, stems, sounds and more.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%23ec4899'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cg fill='white'%3E%3Crect x='14' y='26' width='6' height='12' rx='3'/%3E%3Crect x='24' y='18' width='6' height='28' rx='3'/%3E%3Crect x='34' y='12' width='6' height='40' rx='3'/%3E%3Crect x='44' y='22' width='6' height='20' rx='3'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script>
+    // Apply the theme before first paint to avoid a flash.
+    (function () {
+      var pref = 'system';
+      try { pref = JSON.parse(localStorage.getItem('wc.theme')) || 'system'; } catch (e) {}
+      var dark = pref === 'dark' || (pref === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme-pref', pref);
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <!-- ============ KEY GATE ============ -->
+  <section id="gate" class="gate" hidden>
+    <div class="gate-bg" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="gate-card">
+      <div class="brand brand-lg">
+        <span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Wavecraft<small>Studio</small></span>
+      </div>
+      <h1>Turn a spark of an idea into a finished song.</h1>
+      <p class="lead">Write, generate, remix and master AI music — powered by your own <a href="https://sunoapi.org" target="_blank" rel="noopener">SunoAPI</a> key.</p>
+
+      <form id="gate-form" class="gate-form" autocomplete="off">
+        <label class="label" for="gate-key">Your SunoAPI key</label>
+        <div class="key-input">
+          <input id="gate-key" name="key" type="password" placeholder="Paste your API key" required spellcheck="false" autocomplete="off">
+          <button type="button" class="icon-btn" id="gate-reveal" aria-label="Show key">👁</button>
+        </div>
+        <label class="check"><input type="checkbox" id="gate-remember" checked> Remember on this device</label>
+        <p class="gate-error" id="gate-error" role="alert" hidden></p>
+        <button class="btn btn-primary btn-lg" type="submit" id="gate-submit"><span>Enter the studio</span> <span aria-hidden="true">→</span></button>
+        <p class="hint">No key yet? <a href="https://sunoapi.org/api-key" target="_blank" rel="noopener">Get one from SunoAPI</a>. Your key stays in this browser and is only sent to SunoAPI.</p>
+      </form>
+
+      <ul class="gate-features">
+        <li><b>🎤 Songs & lyrics</b><span>Simple prompts or full custom control</span></li>
+        <li><b>🎚️ Remix</b><span>Cover, extend, add vocals or a band</span></li>
+        <li><b>🧪 Pro tools</b><span>Stems, MIDI, WAV, video & personas</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ APP ============ -->
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <a class="brand" href="#create" aria-label="Wavecraft Studio home">
+        <span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Wavecraft<small>Studio</small></span>
+      </a>
+      <nav class="tabs" id="tabs" aria-label="Studios">
+        <a href="#create" data-view="create"><span aria-hidden="true">🎵</span> Create</a>
+        <a href="#lyrics" data-view="lyrics"><span aria-hidden="true">✍️</span> Lyrics</a>
+        <a href="#remix" data-view="remix"><span aria-hidden="true">🎚️</span> Remix</a>
+        <a href="#sounds" data-view="sounds"><span aria-hidden="true">🌊</span> Sounds</a>
+        <a href="#library" data-view="library"><span aria-hidden="true">📚</span> Library <em class="count" id="lib-count"></em></a>
+      </nav>
+      <div class="top-actions">
+        <button class="pill credits" id="credits-btn" title="Remaining credits — click to refresh">
+          <span aria-hidden="true">💎</span> <span id="credits-val">—</span>
+        </button>
+        <button class="icon-btn activity-btn" id="activity-btn" aria-label="Activity" title="Activity">
+          <span aria-hidden="true">⏳</span><em class="badge" id="activity-badge" hidden>0</em>
+        </button>
+        <div class="theme-switch" role="radiogroup" aria-label="Theme">
+          <button role="radio" data-theme-set="light" title="Light" aria-label="Light theme">☀️</button>
+          <button role="radio" data-theme-set="dark" title="Dark" aria-label="Dark theme">🌙</button>
+          <button role="radio" data-theme-set="system" title="System" aria-label="System theme">💻</button>
+        </div>
+        <button class="icon-btn" id="settings-btn" aria-label="Settings" title="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <main id="view" class="view" tabindex="-1"></main>
+
+    <!-- Activity drawer -->
+    <aside class="drawer" id="drawer" aria-label="Activity" aria-hidden="true">
+      <div class="drawer-head">
+        <h2>Activity</h2>
+        <div class="row">
+          <button class="btn btn-ghost sm" id="clear-done">Clear finished</button>
+          <button class="icon-btn" id="drawer-close" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div class="drawer-body" id="activity-list"></div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+
+    <!-- Player -->
+    <footer class="player" id="player" hidden>
+      <div class="pl-track">
+        <img id="pl-art" alt="" src="">
+        <div class="pl-meta">
+          <b id="pl-title">—</b>
+          <span id="pl-sub">—</span>
+        </div>
+      </div>
+      <div class="pl-center">
+        <div class="pl-controls">
+          <button class="icon-btn" id="pl-prev" aria-label="Previous">⏮</button>
+          <button class="play-btn" id="pl-play" aria-label="Play">▶</button>
+          <button class="icon-btn" id="pl-next" aria-label="Next">⏭</button>
+        </div>
+        <div class="pl-seek">
+          <span id="pl-cur">0:00</span>
+          <input type="range" id="pl-range" min="0" max="1000" value="0" aria-label="Seek">
+          <span id="pl-dur">0:00</span>
+        </div>
+      </div>
+      <div class="pl-right">
+        <button class="icon-btn" id="pl-lyrics" aria-label="Synced lyrics" title="Synced lyrics">🎤</button>
+        <button class="icon-btn" id="pl-open" aria-label="Track details" title="Track details">ⓘ</button>
+        <input type="range" id="pl-vol" min="0" max="1" step="0.01" value="0.9" aria-label="Volume">
+      </div>
+      <div class="karaoke" id="karaoke" hidden>
+        <div class="karaoke-head"><b>Synced lyrics</b><button class="icon-btn" id="karaoke-close" aria-label="Close">✕</button></div>
+        <div class="karaoke-body" id="karaoke-body"></div>
+      </div>
+    </footer>
+    <audio id="audio" preload="none"></audio>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-wrap" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button class="icon-btn" data-close aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <datalist id="persona-list"></datalist>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
